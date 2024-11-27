@@ -22,10 +22,11 @@ if __name__ == "__main__":
     print(colored("Schema inference using Gaussian Mixture Model clustering on PG\n", "red"))
 
     ### Inputs
-    DBname = input("Name of the database: ")
-    uri = input("Neo4j bolt address: ")
-    user = input("Neo4j username: ")
-    passwd = input('Neo4j password: ')
+    DBname = "DBP-15k"
+    uri = "bolt://localhost:7687"
+    user = "neo4j"
+    passwd = "password"
+    print("Connecting to Neo4j Database...")
     driver = GraphDatabase.driver(uri, auth=(user, passwd), encrypted=False) # set encrypted to False to avoid possible errors
     
     print(colored("Starting to query on ", "red"), colored(DBname, "red"), colored(":","red"))
@@ -72,16 +73,17 @@ if __name__ == "__main__":
     print("---------------")
 
     ### Uncomment to compute the f-score
+    #q = input("Do you want to compute the f-score ? (only LDBC) y/n")
 
-    q = input("Do you want to compute the f-score ? (only LDBC) y/n")
-
+    q = "n"
     if q == "y":
         f_score = compute_f_score(test, distinct_labels, file)
         print("F-score : ", f_score)
         print("---------------")
 
     ### Uncomment to compute Rand Index and Adjusted Mutual Information
-    q2 = input("Do you want to compute the Adjusted Rand Index/Adjusted Mutual Information between this clustering and Hdbscan's one ? y/n")
+    #q2 = input("Do you want to compute the Adjusted Rand Index/Adjusted Mutual Information between this clustering and Hdbscan's one ? y/n")
+    q2 = "n"
     if q2 == "y":
         with open("data.csv", 'r') as f:
             text = f.readlines()
@@ -92,7 +94,8 @@ if __name__ == "__main__":
         print("Adjusted Mutual Information : ",ami)
 
     ### Uncomment to create a Neo4j with the resulting infered schema
-    q3 = input("Do you want to create a neo4j graph ? y/n")
+    #q3 = input("Do you want to create a neo4j graph ? y/n")
+    q3 = "n"
 
     if q3 == "y":
         q4 = input("Do you want to add all edges (ie. also non SUBTYPEOF edges ? y/n")

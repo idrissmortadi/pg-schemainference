@@ -1,0 +1,54 @@
+# Byte-compiled files
+*.py[cod]
+__pycache__/
+*.so
+
+# Virtual environment
+venv/
+.env/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Unit test / coverage results
+.coverage
+*.cover
+.hypothesis/
+.tox/
+.pytest_cache/
+
+# Environment files
+.env
+.env.*
+*.envrc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+MANIFEST
+
+# Generated documentation
+docs/_build/
+
+# Others
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db
+
+# SLURM
+errorJob.txt
+outputJob.txt
+slurm_job.sh
