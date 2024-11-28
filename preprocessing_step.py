@@ -39,7 +39,6 @@ def preprocessing(driver):
         for labs in all_labels:
             distinct_labels.append(labs["lab"])
         print(colored("Done.", "green"))
-
         print(colored("Querying neo4j to get all distinct sets of labels:", "yellow"))
         labels_sets = session.run(
             "MATCH(n) \
@@ -55,7 +54,8 @@ def preprocessing(driver):
         #get all nodes' labels and properties' names
         distinct_nodes = session.run(
             "MATCH(n) \
-            RETURN DISTINCT labels(n), keys(n), COUNT(n)"
+            RETURN ID(n), labels(n), keys(n)\
+            LIMIT 1000"
             )
 
         # Storing the number of repetitions of the node
@@ -66,20 +66,21 @@ def preprocessing(driver):
 
         for node in distinct_nodes:
             #get a list of labels
-            labels = sorted(node["labels(n)"])
+            labels = node["labels(n)"]
 
             #get a list of properties
-            properties = sorted(node["keys(n)"])
+            properties = node["keys(n)"]
 
-            labels_properties = labels+properties
+            node_id = node["ID(n)"]
+
+            labels_properties = [str(node_id)] + labels + properties
             labels_properties_str = ' '.join(labels_properties)
+
             if labels_properties_str in list_of_distinct_nodes:
-                amount_dict[labels_properties_str] += node["COUNT(n)"]
+                amount_dict[labels_properties_str] += 1
             else:
                 list_of_distinct_nodes.append(labels_properties_str) 
-                amount_dict[labels_properties_str] = node["COUNT(n)"]
+                amount_dict[labels_properties_str] = 1
     print(colored("Done.", "green"))
-
-
 
     return amount_dict,list_of_distinct_nodes,distinct_labels,labs_sets

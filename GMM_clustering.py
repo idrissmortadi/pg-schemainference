@@ -1,4 +1,4 @@
-""" Step 2 : Clustering step """
+"""Step 2 : Clustering step"""
 
 ##### Imports
 from sklearn.mixture import BayesianGaussianMixture
@@ -8,9 +8,10 @@ import random
 import math
 import hdbscan
 
+
 def to_format(similarities_dict, amount_dict, list_of_distinct_nodes):
-    """ Format data to a correct input for the Gaussian Model
-    
+    """Format data to a correct input for the Gaussian Model
+
     Parameters
     ----------
     similarities_dict : Python dict
@@ -31,17 +32,18 @@ def to_format(similarities_dict, amount_dict, list_of_distinct_nodes):
     """
     data = []
 
-    for node in list_of_distinct_nodes: # iterate through each different node
-        amount = amount_dict[node] # the occurrences of the current node
+    for node in list_of_distinct_nodes:  # iterate through each different node
+        amount = amount_dict[node]  # the occurrences of the current node
 
         for i in range(amount):
-            data.append([similarities_dict[node]]) # data must be a list of lists
+            data.append([similarities_dict[node]])  # data must be a list of lists
 
     return data
 
+
 def count_labs_props(amount_dict, list_of_distinct_nodes, distinct_labels):
-    """ Computes the number of occurrences of each label and property in the dataset
-    
+    """Computes the number of occurrences of each label and property in the dataset
+
     Parameters
     ----------
     amount_dict : Python dict
@@ -76,38 +78,37 @@ def count_labs_props(amount_dict, list_of_distinct_nodes, distinct_labels):
 
     # iterate through each different node
     for node in list_of_distinct_nodes:
-        cur_node = node.split(' ')
+        cur_node = node.split(" ")[1:]
 
         # iterate through each different word found in the node string
         for word in cur_node:
-            
             # test if the word is a label or a property
             if word in distinct_labels:
-
                 # test if the label was already found
-                if word not in labs: 
+                if word not in labs:
                     labs.append(word)
 
                     # increment considering the repeated nodes
-                    values_labs.append(1*amount_dict[node])
+                    values_labs.append(1 * amount_dict[node])
                 else:
                     # increment considering the repeated nodes
-                    values_labs[labs.index(word)]+=(1*amount_dict[node])
+                    values_labs[labs.index(word)] += 1 * amount_dict[node]
             else:
                 # test if the property was already found
                 if word not in props:
                     props.append(word)
 
                     # increment considering the repeated nodes
-                    values_props.append(1*amount_dict[node])
+                    values_props.append(1 * amount_dict[node])
                 else:
                     # increment considering the repeated nodes
-                    values_props[props.index(word)]+=(1*amount_dict[node])
+                    values_props[props.index(word)] += 1 * amount_dict[node]
 
-    return labs,values_labs,props,values_props
+    return labs, values_labs, props, values_props
+
 
 def max_labs_props(amount_dict, list_of_distinct_nodes, n, distinct_labels):
-    """ Finds the most frequent label and the n most frequent properties in this dataset
+    """Finds the most frequent label and the n most frequent properties in this dataset
 
     Parameters
     ----------
@@ -132,7 +133,9 @@ def max_labs_props(amount_dict, list_of_distinct_nodes, n, distinct_labels):
     """
 
     # get the number of occurrences of each label and property in the dataset
-    labs,values_labs,props,values_props = count_labs_props(amount_dict,list_of_distinct_nodes, distinct_labels)
+    labs, values_labs, props, values_props = count_labs_props(
+        amount_dict, list_of_distinct_nodes, distinct_labels
+    )
 
     # get the most frequent label if there are labels
     try:
@@ -155,12 +158,13 @@ def max_labs_props(amount_dict, list_of_distinct_nodes, n, distinct_labels):
             values_props.remove(values_props[ind])
         except:
             pass
-    
-    s = freq_lab + " " + ' '.join(freq_prop)
+
+    s = freq_lab + " " + " ".join(freq_prop)
     return s
 
+
 def compute_similarities(list_of_distinct_nodes, ref_node):
-    """ Computes the similarity measure value with a reference node for each node in the dataset
+    """Computes the similarity measure value with a reference node for each node in the dataset
 
     Parameters
     ----------
@@ -182,17 +186,17 @@ def compute_similarities(list_of_distinct_nodes, ref_node):
 
     # iterate through each different node
     for node in list_of_distinct_nodes:
-
         # get the similarity measure value between a reference node and the current node
-        distance = dice_coefficient(ref_node,node)
+        distance = dice_coefficient(ref_node, node)
 
         # add the value to the dictionary
         similarities_dict[node] = distance
 
     return similarities_dict
 
+
 def iter_gmm(amount_dict, list_of_distinct_nodes, distinct_labels, all_sets_labels):
-    """ Makes a cluster computation, call rec_clustering to find subclusters
+    """Makes a cluster computation, call rec_clustering to find subclusters
 
     Parameters
     ----------
@@ -231,44 +235,46 @@ def iter_gmm(amount_dict, list_of_distinct_nodes, distinct_labels, all_sets_labe
         # iterate through each different node
         for node in list_of_distinct_nodes:
             add = True
-            node_split = node.split(" ")
+            node_split = node.split(" ")[1:]
 
             # if the label set is an empty list (ie. there are unlabelled nodes in the set)
             if lab_set == []:
-
                 # iterate through each label
                 for label in distinct_labels:
-
                     # test if the current node is unlabelled or not
                     if label in node_split:
-
                         # the node is labelled
                         add = False
                         break
             else:
-               
                 # iterate through each labels in the current label set
                 for label in lab_set:
-
                     # test if the current node has every labels of the label set
                     if label not in node_split:
-
                         # it has not every labels
                         add = False
                         break
 
             # if the label set if empty : the node has to be unlabelled, if the label set is not empty : the node has to have every labels of the label set
             if add:
-
                 # add every node for this basic type
                 correct_nodes.append(node)
 
         # search for all subclusters
-        all_clusters, hierarchy = rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, [set(lab_set),None,None])
+        all_clusters, hierarchy = rec_clustering(
+            amount_dict,
+            correct_nodes,
+            distinct_labels,
+            all_clusters,
+            [set(lab_set), None, None],
+        )
         hierarchy_tree.append(hierarchy)
     return all_clusters, hierarchy_tree
 
-def rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, hierarchy):
+
+def rec_clustering(
+    amount_dict, correct_nodes, distinct_labels, all_clusters, hierarchy
+):
     """
 
     Parameters
@@ -303,30 +309,30 @@ def rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, hi
     computed_measures = to_format(similarities_dict, amount_dict, correct_nodes)
 
     # BayesianGaussianMixture cannot cluter one node
-    if len(computed_measures)>1:
-
+    if len(computed_measures) > 1:
         # Train the model with some parameters to speed the process
-        bgmm = BayesianGaussianMixture(n_components=2, tol=1, max_iter=10).fit(computed_measures)
+        bgmm = BayesianGaussianMixture(n_components=2, tol=1, max_iter=10).fit(
+            computed_measures
+        )
 
         # Make the clustering
         predictions = bgmm.predict(computed_measures)
 
         # variable to keep separated nodes of the two clusters
-        clusters = [[],[]]
+        clusters = [[], []]
 
         # variable to keep track on the index of the node in the list 'predictions'
         j = 0
 
         # iterate through each different nodes in this dataset
         for node in correct_nodes:
-
             # get the number of occurrences of each of the current node
             amount = amount_dict[node]
 
             # add "amount" times the node to its predicted cluster
             for i in range(amount):
                 clusters[predictions[j]].append(node)
-                j+=1
+                j += 1
 
         ### First cluster
         set_cluster_1 = set(clusters[0])
@@ -340,7 +346,13 @@ def rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, hi
             correct_nodes = list(set_cluster_1)
 
             # search for more subclusters in this subcluster
-            all_clusters,hierarchy1 = rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, [set_cluster_1,None,None])
+            all_clusters, hierarchy1 = rec_clustering(
+                amount_dict,
+                correct_nodes,
+                distinct_labels,
+                all_clusters,
+                [set_cluster_1, None, None],
+            )
             hierarchy[1] = hierarchy1
 
         ### Second cluster
@@ -355,13 +367,20 @@ def rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, hi
             correct_nodes = list(set_cluster_2)
 
             # search for more subclusters in this subcluster
-            all_clusters,hierarchy2 = rec_clustering(amount_dict, correct_nodes, distinct_labels, all_clusters, [set_cluster_2,None,None])
+            all_clusters, hierarchy2 = rec_clustering(
+                amount_dict,
+                correct_nodes,
+                distinct_labels,
+                all_clusters,
+                [set_cluster_2, None, None],
+            )
             hierarchy[2] = hierarchy2
 
-    return all_clusters,hierarchy
+    return all_clusters, hierarchy
 
-def dice_coefficient(a,b):
-    """ Compute the similarity measure value between two strings
+
+def dice_coefficient(a, b):
+    """Compute the similarity measure value between two strings
 
     Parameters
     ----------
@@ -373,27 +392,31 @@ def dice_coefficient(a,b):
         Float representing the similarity between a and b (the bigger it is the more similar a and b are)
 
     """
+    # Remove id from node string
+    a = " ".join(a.split(" ")[1:])
+    b = " ".join(b.split(" ")[1:])
 
     # if a and b are equal, return 1.0
-    if a == b: return 1.0
-    
+    if a == b:
+        return 1.0
+
     # if a and b are single caracters then they cannot possibly match
-    if len(a) == 1 or len(b) == 1: return 0.0
-    
+    if len(a) == 1 or len(b) == 1:
+        return 0.0
+
     # two lists representing all bigrams found in a and b
-    a_bigram_list = [a[i:i+2] for i in range(len(a)-1)]
-    b_bigram_list = [b[i:i+2] for i in range(len(b)-1)]
-    
+    a_bigram_list = [a[i : i + 2] for i in range(len(a) - 1)]
+    b_bigram_list = [b[i : i + 2] for i in range(len(b) - 1)]
+
     # sort lists alphabetically to help the iteration step
     a_bigram_list.sort()
     b_bigram_list.sort()
-    
+
     lena = len(a_bigram_list)
     lenb = len(b_bigram_list)
 
     matches = i = j = 0
-    while (i < lena and j < lenb):
-
+    while i < lena and j < lenb:
         # if they are equal then increment matches
         if a_bigram_list[i] == b_bigram_list[j]:
             matches += 1
@@ -405,8 +428,8 @@ def dice_coefficient(a,b):
             i += 1
         else:
             j += 1
-    
+
     # use a 'dice_coefficient' formula
-    score = float(2*matches)/float(lena + lenb)
-    
+    score = float(2 * matches) / float(lena + lenb)
+
     return score
