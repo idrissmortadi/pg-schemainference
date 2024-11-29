@@ -14,7 +14,7 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
     labs_sets : Python list of list
         A list of all labels sets
         Its format is : [['Label 1','Label2'],['Label1'],['Label3'],...]
-    all_clusters : Python list of sets
+    hierarchy_tree : Python list of sets
         Each set of this list represents a different cluster,
         they may contain one element or more,
         an element is a string node that was clustered in this cluster
@@ -28,8 +28,6 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
     """
 
     header = ['id', 'labels', 'properties', 'subtypeof', 'type', 'is_basetype']
-
-    data = []
 
     run_clusters = []
 
@@ -127,7 +125,7 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
 
     # iterate through each node that forms the cluster
     for node in hierarchy_tree[0]:
-        props_labs = node.split(" ")
+        props_labs = node.split(" ")[1:]
 
         cur_labels = set()
         cur_properties = set()
