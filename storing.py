@@ -1,10 +1,11 @@
-""" Write clusters into a file """
+"""Write clusters into a file"""
 
 ##### Imports
 import csv
 
-def storing(distinct_labels,labs_sets,hierarchy_tree):
-    """ Write clusters into a file
+
+def storing(distinct_labels, labs_sets, hierarchy_tree):
+    """Write clusters into a file
 
     Parameters
     ----------
@@ -14,11 +15,11 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
     labs_sets : Python list of list
         A list of all labels sets
         Its format is : [['Label 1','Label2'],['Label1'],['Label3'],...]
-    all_clusters : Python list of sets
+    hierarchy_tree : Python list of sets
         Each set of this list represents a different cluster,
         they may contain one element or more,
         an element is a string node that was clustered in this cluster
-        Its format is : [{'Label1 prop1', 'Label1', 'Label1 prop1 prop2'}, {'Label3', 'Label3 prop1 prop4'}, ...] 
+        Its format is : [{'Label1 prop1', 'Label1', 'Label1 prop1 prop2'}, {'Label3', 'Label3 prop1 prop4'}, ...]
 
     Returns
     -------
@@ -27,31 +28,39 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
 
     """
 
-    header = ['id', 'labels', 'properties', 'subtypeof', 'type', 'is_basetype']
+    header = [
+        "id",
+        "labels",
+        "properties",
+        "subtypeof",
+        "type",
+        "is_basetype",
+    ]
 
-    data = []
+    # Associate each neo4j node id to a cluster id
+    neo4j_node_cluster_mapping = {"neo4j_id": [], "cluster_id": []}
 
     run_clusters = []
 
-    i=1
+    cluster_id = 1
 
-    with open("data.csv","w") as f:
+    with open("data.csv", "w") as f:
         writer = csv.writer(f)
         writer.writerow(header)
 
         # iterate through each basic type clusters
         for basic_type in hierarchy_tree:
-            parent_id = i
+            parent_id = cluster_id
 
             # line id
             data_line = [str(parent_id)]
-            
+
             labels = list(basic_type[0])
 
             # labels
             data_line.append(":".join(labels))
 
-            i+=1
+            cluster_id += 1
 
             lcluster = basic_type[1]
             rcluster = basic_type[2]
@@ -71,7 +80,6 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
                 properties = ":".join(sorted(inter_list_props))
 
             if properties != "":
-
                 # intersection of properties
                 data_line.append(properties)
 
@@ -88,15 +96,51 @@ def storing(distinct_labels,labs_sets,hierarchy_tree):
 
             # search for subtypes
             if lcluster is not None:
-                i,k = rec_storing(distinct_labels,labs_sets, writer, lcluster, i, parent_id, run_clusters, k)
+                cluster_id, k = rec_storing(
+                    distinct_labels,
+                    labs_sets,
+                    writer,
+                    lcluster,
+                    cluster_id,
+                    parent_id,
+                    run_clusters,
+                    k,
+                    neo4j_node_cluster_mapping,
+                )
             if rcluster is not None:
-                i,k = rec_storing(distinct_labels,labs_sets, writer, rcluster, i, parent_id, run_clusters, k)
+                cluster_id, k = rec_storing(
+                    distinct_labels,
+                    labs_sets,
+                    writer,
+                    rcluster,
+                    cluster_id,
+                    parent_id,
+                    run_clusters,
+                    k,
+                    neo4j_node_cluster_mapping,
+                )
 
+    with open('neo4j_id_cluster_mapping.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Write headers
+        writer.writerow(neo4j_node_cluster_mapping.keys())
+        # Write rows
+        writer.writerows(zip(*neo4j_node_cluster_mapping.values()))
     return "data.csv"
 
 
-def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, run_clusters, k):
-    """ Write clusters into a file
+def rec_storing(
+    distinct_labels,
+    labs_sets,
+    writer,
+    hierarchy_tree,
+    cluster_id,
+    parent_id,
+    run_clusters,
+    k,
+    neo4j_node_cluster_mapping,
+):
+    """Write clusters into a file
 
     Parameters
     ----------
@@ -110,7 +154,7 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
         Each set of this list represents a different cluster,
         they may contain one element or more,
         an element is a string node that was clustered in this cluster
-        Its format is : [{'Label1 prop1', 'Label1', 'Label1 prop1 prop2'}, {'Label3', 'Label3 prop1 prop4'}, ...] 
+        Its format is : [{'Label1 prop1', 'Label1', 'Label1 prop1 prop2'}, {'Label3', 'Label3 prop1 prop4'}, ...]
 
     Returns
     -------
@@ -127,7 +171,11 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
 
     # iterate through each node that forms the cluster
     for node in hierarchy_tree[0]:
-        props_labs = node.split(" ")
+        # Map node neo4j_id to cluster id
+        neo4j_node_cluster_mapping["neo4j_id"].append(node.split(" ")[0])
+        neo4j_node_cluster_mapping["cluster_id"].append(cluster_id)
+
+        props_labs = node.split(" ")[1:]
 
         cur_labels = set()
         cur_properties = set()
@@ -143,7 +191,7 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
                     all_properties.add(prop_lab)
                     always_properties.add(prop_lab)
                     cur_properties.add(prop_lab)
-            j+=1
+            j += 1
         else:
             for prop_lab in props_labs:
                 if prop_lab in distinct_labels:
@@ -157,25 +205,32 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
         always_properties = always_properties.intersection(cur_properties)
 
     # identify optionnal labels and properties with the always_labels et and always_properties
-    optional_labels = all_labels-always_labels
-    optional_properties = all_properties-always_properties
+    optional_labels = all_labels - always_labels
+    optional_properties = all_properties - always_properties
 
     # add a question mark for optionnal labels and properties
     if optional_labels != set():
-        labels = ":".join(sorted(list(always_labels)))+":?"+":?".join(sorted(list(optional_labels)))
+        labels = (
+            ":".join(sorted(list(always_labels)))
+            + ":?"
+            + ":?".join(sorted(list(optional_labels)))
+        )
     else:
         labels = ":".join(sorted(list(always_labels)))
 
     if optional_properties != set():
-        properties = ":".join(sorted(list(always_properties)))+":?"+":?".join(sorted(list(optional_properties)))
+        properties = (
+            ":".join(sorted(list(always_properties)))
+            + ":?"
+            + ":?".join(sorted(list(optional_properties)))
+        )
     else:
         properties = ":".join(sorted(list(always_properties)))
 
     # if the formed cluster does not exist
-    if labels+properties not in run_clusters:
-
+    if labels + properties not in run_clusters:
         # line id
-        data_line = [str(i)]
+        data_line = [str(cluster_id)]
 
         data_line.append(labels)
 
@@ -185,25 +240,48 @@ def rec_storing(distinct_labels,labs_sets,writer,hierarchy_tree, i, parent_id, r
         data_line.append(str(parent_id))
 
         # type name
-        data_line.append("T"+str(k))
+        data_line.append("T" + str(k))
 
         # is not a base type
         data_line.append("no")
 
         writer.writerow(data_line)
 
-        run_clusters.append(labels+properties)
+        run_clusters.append(labels + properties)
 
-        new_parent_id = i
+        new_parent_id = cluster_id
 
-        k+=1
+        # take neo4j_id
+        data_line.append(node.split()[0])
 
-        i+=1
+        k += 1
+
+        cluster_id += 1
 
         # search for more subtypes
         if hierarchy_tree[1] is not None:
-            i,k = rec_storing(distinct_labels,labs_sets, writer, hierarchy_tree[1], i, new_parent_id, run_clusters, k)
+            cluster_id, k = rec_storing(
+                distinct_labels,
+                labs_sets,
+                writer,
+                hierarchy_tree[1],
+                cluster_id,
+                new_parent_id,
+                run_clusters,
+                k,
+                neo4j_node_cluster_mapping
+            )
         if hierarchy_tree[2] is not None:
-            i,k = rec_storing(distinct_labels,labs_sets, writer, hierarchy_tree[2], i, new_parent_id, run_clusters, k)
+            cluster_id, k = rec_storing(
+                distinct_labels,
+                labs_sets,
+                writer,
+                hierarchy_tree[2],
+                cluster_id,
+                new_parent_id,
+                run_clusters,
+                k,
+                neo4j_node_cluster_mapping
+            )
 
-    return i,k
+    return cluster_id, k
