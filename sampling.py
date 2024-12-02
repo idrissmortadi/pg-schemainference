@@ -58,6 +58,10 @@ def sampling(amount_dict, list_of_distinct_nodes, training_percentage):
         train = data[: int(len(data) * 0.5)]
         validate = data[int(len(data) * 0.5) : int(len(data) * 0.75)]
         test = data[int(len(data) * 0.75) :]
+    elif training_percentage == 100:
+        train = data
+        validate = data
+        test = data
     else:
         print(colored("Unvalid training percentage, should be 80, 70 or 50.", "red"))
 

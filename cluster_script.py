@@ -54,7 +54,7 @@ if __name__ == "__main__":
     print(colored("Data sampling : ", "blue"))
     ts = time.perf_counter()
     amount_dict, list_of_distinct_nodes, validate, test = sampling(
-        amount_dict, list_of_distinct_nodes, 80
+        amount_dict, list_of_distinct_nodes, 100  # Use all data
     )
     tsf = time.perf_counter()
     steps = tsf - ts  # time to complete the sampling step
@@ -92,34 +92,34 @@ if __name__ == "__main__":
     ### Uncomment to compute the f-score
     # q = input("Do you want to compute the f-score ? (only LDBC) y/n")
 
-    q = "n"
-    if q == "y":
-        f_score = compute_f_score(test, distinct_labels, file)
-        print("F-score : ", f_score)
-        print("---------------")
+    # q = "n"
+    # if q == "y":
+    #     f_score = compute_f_score(test, distinct_labels, file)
+    #     print("F-score : ", f_score)
+    #     print("---------------")
 
     ### Uncomment to compute Rand Index and Adjusted Mutual Information
     # q2 = input("Do you want to compute the Adjusted Rand Index/Adjusted Mutual Information between this clustering and Hdbscan's one ? y/n")
-    q2 = "n"
-    if q2 == "y":
-        with open("data.csv", "r") as f:
-            text = f.readlines()
-        len_X = len(text) - 1  # header and last blank line
-        print(len_X)
-        ari, ami = hdbscan_indexes(validate, distinct_labels, len_X)
-        print("Rand Index : ", ari)
-        print("Adjusted Mutual Information : ", ami)
+    # q2 = "n"
+    # if q2 == "y":
+    #     with open("data.csv", "r") as f:
+    #         text = f.readlines()
+    #     len_X = len(text) - 1  # header and last blank line
+    #     print(len_X)
+    #     ari, ami = hdbscan_indexes(validate, distinct_labels, len_X)
+    #     print("Rand Index : ", ari)
+    #     print("Adjusted Mutual Information : ", ami)
 
     ### Uncomment to create a Neo4j with the resulting infered schema
     # q3 = input("Do you want to create a neo4j graph ? y/n")
-    q3 = "n"
+    # q3 = "n"
 
-    if q3 == "y":
-        q4 = input("Do you want to add all edges (ie. also non SUBTYPEOF edges ? y/n")
-        t4 = time.perf_counter()
-        create_neo4j_graph(driver, q4 == "y")
-        t4f = time.perf_counter()
+    # if q3 == "y":
+    #     q4 = input("Do you want to add all edges (ie. also non SUBTYPEOF edges ? y/n")
+    #     t4 = time.perf_counter()
+    #     create_neo4j_graph(driver, q4 == "y")
+    #     t4f = time.perf_counter()
 
-        step4 = t4f - t4
-        print(colored("Graph created.", "green"))
-        print("Step 4: Creating neo4j graph was completed in ", step4, "s")
+    #     step4 = t4f - t4
+    #     print(colored("Graph created.", "green"))
+    #     print("Step 4: Creating neo4j graph was completed in ", step4, "s")
