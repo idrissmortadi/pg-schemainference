@@ -50,6 +50,4 @@ docs/_build/
 Thumbs.db
 
 # SLURM
-errorJob.txt
-outputJob.txt
-slurm_job.sh
+slurm_jobs/
