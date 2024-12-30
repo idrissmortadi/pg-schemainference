@@ -382,68 +382,68 @@ def rec_clustering(
 
 
 # Pre-load embeddings for efficiency
-file_path = "graph_keys_embeddings.pkl"
-embeddings = joblib.load(file_path)
+# file_path = "graph_keys_embeddings.pkl"
+# embeddings = joblib.load(file_path)
 
 def dice_coefficient(a, b):
     """Compute similarity measure between two strings."""
-    # Cache the split operation
-    a_keys = a.split(" ")[1:]
-    b_keys = b.split(" ")[1:]
+    # # Cache the split operation
+    # a_keys = a.split(" ")[1:]
+    # b_keys = b.split(" ")[1:]
 
-    # Efficiently gather embeddings
-    vecs_a = np.array([embeddings[key] for key in a_keys if key in embeddings])
-    vecs_b = np.array([embeddings[key] for key in b_keys if key in embeddings])
+    # # Efficiently gather embeddings
+    # vecs_a = np.array([embeddings[key] for key in a_keys if key in embeddings])
+    # vecs_b = np.array([embeddings[key] for key in b_keys if key in embeddings])
 
-    # Compute mean embeddings
-    vec_a = vecs_a.mean(axis=0) if vecs_a.size else np.zeros(768)
-    vec_b = vecs_b.mean(axis=0) if vecs_b.size else np.zeros(768)
+    # # Compute mean embeddings
+    # vec_a = vecs_a.mean(axis=0) if vecs_a.size else np.zeros(768)
+    # vec_b = vecs_b.mean(axis=0) if vecs_b.size else np.zeros(768)
 
-    # Cosine similarity computation
-    norm_a = np.linalg.norm(vec_a)
-    norm_b = np.linalg.norm(vec_b)
+    # # Cosine similarity computation
+    # norm_a = np.linalg.norm(vec_a)
+    # norm_b = np.linalg.norm(vec_b)
 
-    if norm_a > 0 and norm_b > 0:
-        score = np.dot(vec_a, vec_b) / (norm_a * norm_b)
-    else:
-        score = 0.0
+    # if norm_a > 0 and norm_b > 0:
+    #     score = np.dot(vec_a, vec_b) / (norm_a * norm_b)
+    # else:
+    #     score = 0.0
+
+    # return score
+
+    # if a and b are equal, return 1.0
+    if a == b:
+        return 1.0
+
+    # if a and b are single characters then they cannot possibly match
+    if len(a) == 1 or len(b) == 1:
+        return 0.0
+
+    # two lists representing all bigrams found in a and b
+    a_bigram_list = [a[i : i + 2] for i in range(len(a) - 1)]
+    b_bigram_list = [b[i : i + 2] for i in range(len(b) - 1)]
+
+    # sort lists alphabetically to help the iteration step
+    a_bigram_list.sort()
+    b_bigram_list.sort()
+
+    lena = len(a_bigram_list)
+    lenb = len(b_bigram_list)
+
+    matches = i = j = 0
+    while i < lena and j < lenb:
+        # if they are equal then increment matches
+        if a_bigram_list[i] == b_bigram_list[j]:
+            matches += 1
+            i += 1
+            j += 1
+
+        # alphabetical sort helps us earn time in these cases
+        elif a_bigram_list[i] < b_bigram_list[j]:
+            i += 1
+        else:
+            j += 1
+
+    # use a 'dice_coefficient' formula
+    score = float(2 * matches) / float(lena + lenb)
 
     return score
-
-#   # if a and b are equal, return 1.0
-#   if a == b:
-#       return 1.0
-#
-#   # if a and b are single caracters then they cannot possibly match
-#   if len(a) == 1 or len(b) == 1:
-#       return 0.0
-#
-#   # two lists representing all bigrams found in a and b
-#   a_bigram_list = [a[i : i + 2] for i in range(len(a) - 1)]
-#   b_bigram_list = [b[i : i + 2] for i in range(len(b) - 1)]
-#
-#    # sort lists alphabetically to help the iteration step
-#    a_bigram_list.sort()
-#    b_bigram_list.sort()
-#
-#    lena = len(a_bigram_list)
-#    lenb = len(b_bigram_list)
-#
-#    matches = i = j = 0
-#    while i < lena and j < lenb:
-#        # if they are equal then increment matches
-#        if a_bigram_list[i] == b_bigram_list[j]:
-#            matches += 1
-#            i += 1
-#            j += 1
-#
-#        # alphabetical sort helps us earn time in theses cases
-#        elif a_bigram_list[i] < b_bigram_list[j]:
-#            i += 1
-#        else:
-#            j += 1
-#
-#    # use a 'dice_coefficient' formula
-#    score = float(2 * matches) / float(lena + lenb)
-#
-#    return score

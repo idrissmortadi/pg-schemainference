@@ -60,7 +60,6 @@ def preprocessing(driver):
         distinct_nodes = session.run(
             "MATCH(n) \
             RETURN ID(n), labels(n), keys(n)\
-            LIMIT 100\
             "
         )
 
