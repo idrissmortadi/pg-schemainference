@@ -1,16 +1,16 @@
-"""Step 1 : Preprocessing data"""
-
 ##### Imports
 from termcolor import colored
 
 
-def preprocessing(driver):
+def preprocessing(driver, language="en"):
     """Queries a property graph using the driver to get all needed labels',properties' and nodes' information
 
     Parameters
     ----------
     driver : GraphDatabase.driver object
         Driver used to access the PG stored in a Neo4j database.
+    language : str, optional
+        Language code to filter nodes (default is "fr"). Use "fr" for French nodes or "en" for English nodes.
 
     Returns
     -------
@@ -28,22 +28,35 @@ def preprocessing(driver):
         Its format is : [['Label 1','Label2'],['Label1'],['Label3'],...]
     """
 
+    if language == "fr":
+        base_uri = "http://fr.dbpedia.org/"
+    elif language == "en":
+        base_uri = "http://dbpedia.org/"
+
     print(colored("Querying neo4j to get all distinct labels:", "yellow"))
     with driver.session() as session:
         all_labels = session.run(
-            "MATCH(n) WITH LABELS(n) AS labs \
-            UNWIND labs AS lab \
-            RETURN DISTINCT lab"
+            f"""
+            MATCH (n)
+            WHERE any(key IN keys(n) WHERE toString(n[key]) STARTS WITH '{base_uri}')
+            WITH LABELS(n) AS labs 
+            UNWIND labs AS lab 
+            RETURN DISTINCT lab
+            """
         )
 
         distinct_labels = []
         for labs in all_labels:
             distinct_labels.append(labs["lab"])
         print(colored("Done.", "green"))
+
         print(colored("Querying neo4j to get all distinct sets of labels:", "yellow"))
         labels_sets = session.run(
-            "MATCH(n) \
-            RETURN DISTINCT LABELS(n)"
+            f"""
+            MATCH (n)
+            WHERE any(key IN keys(n) WHERE toString(n[key]) STARTS WITH '{base_uri}')
+            RETURN DISTINCT LABELS(n)
+            """
         )
 
         labs_sets = []
@@ -56,11 +69,12 @@ def preprocessing(driver):
                 "Querying neo4j to get all distinct sets of labels and props:", "yellow"
             )
         )
-        # get all nodes' labels and properties' names
         distinct_nodes = session.run(
-            "MATCH(n) \
-            RETURN ID(n), labels(n), keys(n)\
-            "
+            f"""
+            MATCH (n)
+            WHERE any(key IN keys(n) WHERE toString(n[key]) STARTS WITH '{base_uri}')
+            RETURN ID(n), labels(n), keys(n)
+            """
         )
 
         # Storing the number of repetitions of the node

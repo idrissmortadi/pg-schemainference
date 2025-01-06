@@ -2,6 +2,7 @@
 
 ##### Imports
 import csv
+import os
 
 
 def storing(distinct_labels, labs_sets, hierarchy_tree):
@@ -44,7 +45,10 @@ def storing(distinct_labels, labs_sets, hierarchy_tree):
 
     cluster_id = 1
 
-    with open("data.csv", "w") as f:
+    # make output dir if not exists
+    os.makedirs("output", exist_ok=True)
+
+    with open("output/data.csv", mode="w") as f:
         writer = csv.writer(f)
         writer.writerow(header)
 
@@ -120,7 +124,7 @@ def storing(distinct_labels, labs_sets, hierarchy_tree):
                     neo4j_node_cluster_mapping,
                 )
 
-    with open('neo4j_id_cluster_mapping.csv', mode='w', newline='') as file:
+    with open("output/neo4j_id_cluster_mapping.csv", mode="w", newline="") as file:
         writer = csv.writer(file)
         # Write headers
         writer.writerow(neo4j_node_cluster_mapping.keys())
@@ -269,7 +273,7 @@ def rec_storing(
                 new_parent_id,
                 run_clusters,
                 k,
-                neo4j_node_cluster_mapping
+                neo4j_node_cluster_mapping,
             )
         if hierarchy_tree[2] is not None:
             cluster_id, k = rec_storing(
@@ -281,7 +285,7 @@ def rec_storing(
                 new_parent_id,
                 run_clusters,
                 k,
-                neo4j_node_cluster_mapping
+                neo4j_node_cluster_mapping,
             )
 
     return cluster_id, k
